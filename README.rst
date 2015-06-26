@@ -5,6 +5,9 @@ This is a python client for sync. Check it out with::
 
   $ python sync/main.py --help
 
+For instance, if you want to get all passwords (encrypted) use the
+`get_records` action:
+
 .. code-block::
 
   $ python sync/main.py alexis@notmyidea.org $PASSWORD get_records passwords
