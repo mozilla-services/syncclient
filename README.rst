@@ -1,5 +1,5 @@
-Python Sync client
-##################
+Python firefox sync client
+##########################
 
 This is a python client for sync. Check it out with::
 
