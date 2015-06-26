@@ -13,14 +13,11 @@ def main():
     parser.add_argument(dest='password',
                         help='Firefox Accounts password.')
     parser.add_argument(dest='action', help='The action to be executed',
-                        default='get_collections', nargs='?',
+                        default='info_collections', nargs='?',
                         choices=[m for m in dir(SyncClient)
                                  if not m.startswith('_')])
 
     args, extra = parser.parse_known_args()
-
-    # XXX find a way to easily get client_state + bid assertion
-    # from the browser console maybe.
 
     client = SyncClient(args.login, args.password)
     pprint(getattr(client, args.action)(*extra))

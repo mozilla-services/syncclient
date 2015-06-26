@@ -1,7 +1,8 @@
 from hashlib import sha256
+from binascii import hexlify
 import requests
 from requests_hawk import HawkAuth
-from PyFxa import Client as FxAClient
+from fxa.core import Client as FxAClient
 
 # This is a proof of concept, in python, to get some data of some collections.
 # The data stays encrypted and because we don't have the keys to decrypt it
@@ -12,15 +13,16 @@ TOKENSERVER_URL = "https://token.services.mozilla.com/"
 FXA_SERVER_URL = "https://api.accounts.firefox.com"
 
 
-def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL):
+def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
+                            tokenserver_url=TOKENSERVER_URL):
     """Trade a user and password for a BrowserID assertion and the client
     state.
     """
     client = FxAClient(server_url=fxa_server_url)
     session = client.login(login, password, keys=True)
-    bid_assertion = session.get_identity_assertion('*')
+    bid_assertion = session.get_identity_assertion(tokenserver_url)
     _, keyB = session.fetch_keys()
-    return bid_assertion, hex(sha256(keyB)[0:16])
+    return bid_assertion, hexlify(sha256(keyB).digest()[0:16])
 
 
 class SyncClient(object):
@@ -30,7 +32,6 @@ class SyncClient(object):
     def __init__(self, login, password, tokenserver_url=TOKENSERVER_URL,
                  fxa_server_url=FXA_SERVER_URL):
         bid_assertion, client_state = get_browserid_assertion(login, password)
-        from pdb import set_trace; set_trace()
         self._authenticate(bid_assertion, client_state, tokenserver_url)
 
     def _request(self, method, url, *args, **kwargs):
@@ -45,7 +46,7 @@ class SyncClient(object):
     def _authenticate(self, bid_assertion, client_state, tokenserver_url):
         """Asks for new temporary token given a BrowserID assertion"""
         headers = {
-            'Authorization': 'BrowserID %s' % bid_assertion,
+            'Authorization': 'BrowserID %s' % bid_assertion.encode(),
             'X-Client-State': client_state
         }
         raw_resp = requests.get(tokenserver_url + '/1.0/sync/1.5',
@@ -75,7 +76,7 @@ class SyncClient(object):
 
     def info_quota(self):
         """
-        Returns a two-item list giving the user’s current usage and quota
+        Returns a two-item list giving the user's current usage and quota
         (in KB). The second item will be null if the server does not enforce
         quotas.
 
@@ -139,8 +140,8 @@ class SyncClient(object):
 
         :param sort:
             sorts the output:
-            ‘newest’ - orders by last-modified time, largest first
-            ‘index’ - orders by the sortindex, highest weight first
+            "newest" - orders by last-modified time, largest first
+            "index" - orders by the sortindex, highest weight first
         """
         # XXX Handle parameters + pagination.
         return self._request('get', '/storage/%s' % collection.lower())
@@ -185,7 +186,7 @@ class SyncClient(object):
         Takes a list of BSOs in the request body and iterates over them,
         effectively doing a series of individual PUTs with the same timestamp.
 
-        Each BSO record must include an “id” field, and the corresponding BSO
+        Each BSO record must include an "id" field, and the corresponding BSO
         will be created or updated according to the semantics of a PUT request
         targeting that specific record.
 
@@ -196,8 +197,12 @@ class SyncClient(object):
         success or failure for each BSO. It will have the following keys:
 
             modified: the new last-modified time for the updated items.
-            success: a (possibly empty) list of ids of BSOs that were successfully stored.
-            failed: a (possibly empty) object whose keys are the ids of BSOs that were not stored successfully, and whose values are lists of strings describing possible reasons for the failure.
+            success: a (possibly empty) list of ids of BSOs that were
+                     successfully stored.
+            failed: a (possibly empty) object whose keys are the ids of BSOs
+                    that were not stored successfully, and whose values are
+                    lists of strings describing possible reasons for the
+                    failure.
 
         For example:
 
@@ -209,14 +214,11 @@ class SyncClient(object):
                     "GXS58IDC_14": ["invalid sortindex"]}
         }
 
-        Posted BSOs whose ids do not appear in either “success” or “failed” should be treated as having failed for an unspecified reason.
+        Posted BSOs whose ids do not appear in either "success" or "failed"
+        should be treated as having failed for an unspecified reason.
 
-        Two input formats are available for multiple record POST requests, selected by the Content-Type header of the request:
-
-            application/json: the input is a JSON list of objects, one for for each BSO in the request.
-            application/newlines: each BSO is sent as a separate JSON object followed by a newline.
-
-        For backwards-compatibility with existing clients, the server will also treat text/plain input as JSON.
-
-        Note that the server may impose a limit on the total amount of data included in the request, and/or may decline to process more than a certain number of BSOs in a single request. The default limit on the number of BSOs per request is 100.
+        Note that the server may impose a limit on the total amount of data
+        included in the request, and/or may decline to process more than a
+        certain number of BSOs in a single request. The default limit on the
+        number of BSOs per request is 100.
         """
