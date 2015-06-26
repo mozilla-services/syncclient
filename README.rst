@@ -1,8 +1,9 @@
 Python Sync client
 ##################
 
-This is a python client for sync. Check it out with `python sync/main.py
---help`.
+This is a python client for sync. Check it out with::
+
+  $ python sync/main.py --help
 
 .. code-block::
 
