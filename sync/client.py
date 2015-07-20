@@ -29,9 +29,9 @@ class SyncClient(object):
     """Client for the Firefox Sync server.
     """
 
-    def __init__(self, login, password, tokenserver_url=TOKENSERVER_URL,
+    def __init__(self, bid_assertion, client_state,
+                 tokenserver_url=TOKENSERVER_URL,
                  fxa_server_url=FXA_SERVER_URL):
-        bid_assertion, client_state = get_browserid_assertion(login, password)
         self._authenticate(bid_assertion, client_state, tokenserver_url)
 
     def _request(self, method, url, *args, **kwargs):
