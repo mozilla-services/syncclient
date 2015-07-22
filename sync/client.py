@@ -38,10 +38,10 @@ class SyncClient(object):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
         """
-        raw_resp = requests.request(method, self.api_endpoint + url,
-                                    auth=self.auth, *args, **kwargs)
-        raw_resp.raise_for_status()
-        return raw_resp.json()
+        self.raw_resp = requests.request(method, self.api_endpoint + url,
+                                         auth=self.auth, *args, **kwargs)
+        self.raw_resp.raise_for_status()
+        return self.raw_resp.json()
 
     def _authenticate(self, bid_assertion, client_state, tokenserver_url):
         """Asks for new temporary token given a BrowserID assertion"""
@@ -144,13 +144,28 @@ class SyncClient(object):
             "index" - orders by the sortindex, highest weight first
         """
         # XXX Handle parameters + pagination.
-        return self._request('get', '/storage/%s' % collection.lower())
+        params = {}
+        if full:
+            params['full'] = True
+        if ids is not None:
+            params['ids'] = ','.join(ids)
+        if newer is not None:
+            params['newer'] = newer
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort is not None and sort in ('newest', 'index'):
+            params['sort'] = sort
+
+        return self._request('get', '/storage/%s' % collection.lower(),
+                             params=params)
 
     def get_record(self, collection, record_id):
         """Returns the BSO in the collection corresponding to the requested id.
         """
         return self._request('get', '/storage/%s/%s' % (collection.lower(),
-                             record_id))
+                                                        record_id))
 
     def put_record(self, collection, record, if_unmodified_since=None):
         """

@@ -1,1 +1,7 @@
 *.pyc
+*.egg-info
+*.stamp
+*.db
+.venv/
+.coverage
+.tox/
