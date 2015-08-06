@@ -20,7 +20,6 @@ def main():
     args, extra = parser.parse_known_args()
 
     bid_assertion_args = get_browserid_assertion(args.login, args.password)
-    print bid_assertion_args
     client = SyncClient(*bid_assertion_args)
     pprint(getattr(client, args.action)(*extra))
 
