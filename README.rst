@@ -1,6 +1,11 @@
 Python firefox sync client
 ##########################
 
+.. note::
+
+  Currently, this is a client only used as a proof of concept. Believe it or not but
+  there are no tests. Don't use it (yet) for anything critical.
+  
 This is a python client for sync. Check it out with:
 
   $ python setup.py install
