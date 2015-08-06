@@ -1,8 +1,9 @@
 Python firefox sync client
 ##########################
 
-This is a python client for sync. Check it out with::
+This is a python client for sync. Check it out with:
 
+  $ python setup.py install
   $ python sync/main.py --help
 
 For instance, if you want to get all passwords (encrypted) use the
