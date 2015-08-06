@@ -149,8 +149,8 @@ class SyncClient(object):
     def get_record(self, collection, record_id):
         """Returns the BSO in the collection corresponding to the requested id.
         """
-        return self._request('get', '/storage/%s/%s' % collection.lower(),
-                             record_id)
+        return self._request('get', '/storage/%s/%s' % (collection.lower(),
+                             record_id))
 
     def put_record(self, collection, record, if_unmodified_since=None):
         """
