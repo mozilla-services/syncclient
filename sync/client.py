@@ -167,6 +167,12 @@ class SyncClient(object):
         return self._request('get', '/storage/%s/%s' % (collection.lower(),
                                                         record_id))
 
+    def delete_record(self, collection, record_id):
+        """Deletes the BSO at the given location.
+        """
+        return self._request('delete', '/storage/%s/%s' % (collection.lower(),
+                                                           record_id))
+
     def put_record(self, collection, record, if_unmodified_since=None):
         """
         Creates or updates a specific BSO within a collection.
