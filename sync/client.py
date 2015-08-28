@@ -193,8 +193,9 @@ class SyncClient(object):
         Note that the server may impose a limit on the amount of data
         submitted for storage in a single BSO.
         """
-
-        pass
+        record_id = record.pop('id')
+        return self._request('put', '/storage/%s/%s' % (
+            collection.lower(), record_id), json=record)
 
     def post_records(self, collection, records):
         """
