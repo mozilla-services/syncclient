@@ -1,4 +1,4 @@
-from .support import unittest
+from .support import unittest, patch
 from sync.client import SyncClient, get_browserid_assertion
 from hashlib import sha256
 
@@ -10,14 +10,8 @@ class ClientRequestIssuanceTest(unittest.TestCase):
         super(ClientRequestIssuanceTest, self).setUp()
         # Mock the _authenticate method in order to avoid issuance of
         # requests when we start the client.
-        patched = []
-        to_mock = ('sync.client.requests',
-                   'sync.client.SyncClient._authenticate')
-
-        for m in to_mock:
-            p = mock.patch(m)
-            patched.append(p.start())
-            self.addCleanup(p.stop)
+        patched = patch(self, 'sync.client.requests',
+                        'sync.client.SyncClient._authenticate')
 
         self.requests = patched[0].request
 
@@ -49,7 +43,11 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 
 
 class ClientAuthenticationTest(unittest.TestCase):
-    pass
+    def setUp(self):
+        super(ClientAuthenticationTest, self).setUp()
+        p = mock.patch('sync.client.SyncClient.requests')
+        p.start()
+        self.addCleanup(p.stop)
 
 
 class BrowserIDAssertionTest(unittest.TestCase):
