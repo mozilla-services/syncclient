@@ -29,9 +29,6 @@ class ClientRequestIssuanceTest(unittest.TestCase):
             'get', 'http://example.org/test',
             auth=client.auth)
 
-    def test_client_proxies_authentication(self):
-        pass
-
     def test_request_raise_on_error(self):
         # Patch requests to raise an exception.
         resp = mock.MagicMock()
@@ -45,9 +42,47 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 class ClientAuthenticationTest(unittest.TestCase):
     def setUp(self):
         super(ClientAuthenticationTest, self).setUp()
-        p = mock.patch('sync.client.SyncClient.requests')
-        p.start()
-        self.addCleanup(p.stop)
+        patched = patch(self, 'sync.client.requests',
+                        'sync.client.HawkAuth')
+        self.requests = patched[0]
+        self.hawk_auth = patched[1]
+
+    def test_authenticate_requests_the_tokenserver_with_proper_headers(self):
+        SyncClient("bid_assertion", "client_state")
+        self.requests.get.assert_called_with(
+            'https://token.services.mozilla.com//1.0/sync/1.5',
+            headers={
+                'X-Client-State': 'client_state',
+                'Authorization': 'BrowserID bid_assertion'
+            })
+
+    def test_error_with_tokenserver_is_raised(self):
+        resp = mock.MagicMock()
+        resp.raise_for_status.side_effect = Exception
+        self.requests.get.return_value = resp
+        self.assertRaises(Exception, SyncClient, "bid_assertion",
+                          "client_state")
+
+    def test_credentials_from_tokenserver_are_passed_to_hawkauth(self):
+        resp = mock.MagicMock()
+        resp.json.return_value = {
+            'hashalg': mock.sentinel.hashalg,
+            'id': mock.sentinel.id,
+            'key': mock.sentinel.key,
+            'uid': mock.sentinel.uid,
+            'api_endpoint': mock.sentinel.api_endpoint
+        }
+        self.requests.get.return_value = resp
+        client = SyncClient("bid_assertion", "client_state")
+
+        self.hawk_auth.assert_called_with(credentials={
+            'algorithm': mock.sentinel.hashalg,
+            'id': mock.sentinel.id,
+            'key': mock.sentinel.key
+        })
+
+        assert client.user_id == mock.sentinel.uid
+        assert client.api_endpoint == mock.sentinel.api_endpoint
 
 
 class BrowserIDAssertionTest(unittest.TestCase):
