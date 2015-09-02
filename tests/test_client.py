@@ -55,3 +55,57 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client.delete_all_records()
         self.client._request.assert_called_with(
             'delete', '')
+
+    def test_get_records_sets_full_by_default(self):
+        self.client.get_records('mycollection')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'full': True})
+
+    def test_get_records_lowers_the_collection_name(self):
+        self.client.get_records('myCollection')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'full': True})
+
+    def test_get_records_handles_full(self):
+        self.client.get_records('mycollection', full=False)
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={})
+
+    def test_get_records_handles_newer(self):
+        self.client.get_records('mycollection', newer='newer')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'newer': 'newer', 'full': True})
+
+    def test_get_records_handles_limit(self):
+        self.client.get_records('mycollection', limit='limit')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'limit': 'limit', 'full': True})
+
+    def test_get_records_handles_offset(self):
+        self.client.get_records('mycollection', offset='offset')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'offset': 'offset', 'full': True})
+
+    def test_get_records_handles_sort_by_newest(self):
+        self.client.get_records('mycollection', sort='newest')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'sort': 'newest', 'full': True})
+
+    def test_get_records_handles_sort_by_index(self):
+        self.client.get_records('mycollection', sort='index')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'sort': 'index', 'full': True})
+
+    def test_get_records_ignore_sort_by_invalid(self):
+        self.client.get_records('mycollection', sort='invalid')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'full': True})
