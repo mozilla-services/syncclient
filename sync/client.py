@@ -1,6 +1,11 @@
 from hashlib import sha256
 from binascii import hexlify
-import urlparse
+import sys
+
+if sys.version_info[0] > 2:  # PRAGMA NO_COVER
+    from urllib import parse as urlparse
+else:
+    import urlparse
 
 import requests
 from requests_hawk import HawkAuth
@@ -52,8 +57,8 @@ class SyncClient(object):
             'Authorization': 'BrowserID %s' % bid_assertion.encode(),
             'X-Client-State': client_state
         }
-        raw_resp = requests.get(tokenserver_url + '/1.0/sync/1.5',
-                                headers=headers)
+        url = urlparse.urljoin(tokenserver_url, '/1.0/sync/1.5')
+        raw_resp = requests.get(url, headers=headers)
         raw_resp.raise_for_status()
         resp = raw_resp.json()
 

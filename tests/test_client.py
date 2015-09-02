@@ -48,9 +48,9 @@ class ClientAuthenticationTest(unittest.TestCase):
         self.hawk_auth = patched[1]
 
     def test_authenticate_requests_the_tokenserver_with_proper_headers(self):
-        SyncClient("bid_assertion", "client_state")
+        SyncClient(u"bid_assertion", "client_state")
         self.requests.get.assert_called_with(
-            'https://token.services.mozilla.com//1.0/sync/1.5',
+            'https://token.services.mozilla.com/1.0/sync/1.5',
             headers={
                 'X-Client-State': 'client_state',
                 'Authorization': 'BrowserID bid_assertion'
