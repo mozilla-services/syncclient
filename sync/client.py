@@ -150,7 +150,7 @@ class SyncClient(object):
         if full:
             params['full'] = True
         if ids is not None:
-            params['ids'] = ','.join(ids)
+            params['ids'] = ','.join(map(str, ids))
         if newer is not None:
             params['newer'] = newer
         if limit is not None:
