@@ -109,3 +109,25 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client._request.assert_called_with(
             'get', '/storage/mycollection',
             params={'full': True})
+
+    def test_get_record(self):
+        self.client.get_record('myCollection', 1234)
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection/1234')
+
+    def test_delete_record(self):
+        self.client.delete_record('myCollection', 1234)
+        self.client._request.assert_called_with(
+            'delete', '/storage/mycollection/1234')
+
+    def test_put_record(self):
+        record = {'id': 1234, 'foo': 'bar'}
+        self.client.put_record('myCollection', record)
+        self.client._request.assert_called_with(
+            'put', '/storage/mycollection/1234',
+            json={'foo': 'bar'})
+
+    def test_put_record_doesnt_modify_the_passed_object(self):
+        record = {'id': 1234, 'foo': 'bar'}
+        self.client.put_record('myCollection', record)
+        assert 'id' in record.keys()

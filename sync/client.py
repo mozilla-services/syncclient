@@ -145,7 +145,6 @@ class SyncClient(object):
             "newest" - orders by last-modified time, largest first
             "index" - orders by the sortindex, highest weight first
         """
-        # XXX Handle parameters + pagination.
         params = {}
         if full:
             params['full'] = True
@@ -201,6 +200,7 @@ class SyncClient(object):
         Note that the server may impose a limit on the amount of data
         submitted for storage in a single BSO.
         """
+        record = record.copy()
         record_id = record.pop('id')
         return self._request('put', '/storage/%s/%s' % (
             collection.lower(), record_id), json=record)
@@ -246,3 +246,4 @@ class SyncClient(object):
         certain number of BSOs in a single request. The default limit on the
         number of BSOs per request is 100.
         """
+        pass
