@@ -34,3 +34,19 @@ class ClientHTTPCallsTest(unittest.TestCase):
     def test_info_collection(self):
         self.client.info_collections()
         self.client._request.assert_called_with('get', '/info/collections')
+
+    def test_info_quota(self):
+        self.client.info_quota()
+        self.client._request.assert_called_with('get', '/info/quota')
+
+    def test_collection_usage(self):
+        self.client.get_collection_usage()
+        self.client._request.assert_called_with(
+            'get',
+            '/info/collection_usage')
+
+    def test_collection_counts(self):
+        self.client.get_collection_counts()
+        self.client._request.assert_called_with(
+            'get',
+            '/info/collection_counts')

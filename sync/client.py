@@ -99,11 +99,11 @@ class SyncClient(object):
         Returns an object mapping collection names associated with the
         account to the total number of items in each collection.
         """
-        return self.request('get', '/info/collection_counts')
+        return self._request('get', '/info/collection_counts')
 
     def delete_all_records(self):
         """Deletes all records for the user."""
-        return self.request('delete', '')
+        return self._request('delete', '')
 
     def get_records(self, collection, full=True, ids=None, newer=None,
                     limit=None, offset=None, sort=None, if_modified_since=None,
