@@ -1,5 +1,7 @@
 from hashlib import sha256
 from binascii import hexlify
+import urlparse
+
 import requests
 from requests_hawk import HawkAuth
 from fxa.core import Client as FxAClient
@@ -38,7 +40,8 @@ class SyncClient(object):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
         """
-        self.raw_resp = requests.request(method, self.api_endpoint + url,
+        url = urlparse.urljoin(self.api_endpoint, url)
+        self.raw_resp = requests.request(method, url,
                                          auth=self.auth, *args, **kwargs)
         self.raw_resp.raise_for_status()
         return self.raw_resp.json()
@@ -103,9 +106,7 @@ class SyncClient(object):
 
     def delete_all_records(self):
         """Deletes all records for the user."""
-        # Since the _request method already prefix endpoints with "/"
-        # there is no need to specify it here.
-        return self._request('delete', '')
+        return self._request('delete', '/')
 
     def get_records(self, collection, full=True, ids=None, newer=None,
                     limit=None, offset=None, sort=None, if_modified_since=None,

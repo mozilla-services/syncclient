@@ -1,19 +1,72 @@
 from .support import unittest
-from sync.client import SyncClient
+from sync.client import SyncClient, get_browserid_assertion
+from hashlib import sha256
 
 import mock
 
 
-class ClientInstantiationTest(unittest.TestCase):
-    pass
-
-
 class ClientRequestIssuanceTest(unittest.TestCase):
-    pass
+    def setUp(self):
+        super(ClientRequestIssuanceTest, self).setUp()
+        # Mock the _authenticate method in order to avoid issuance of
+        # requests when we start the client.
+        patched = []
+        to_mock = ('sync.client.requests',
+                   'sync.client.SyncClient._authenticate')
+
+        for m in to_mock:
+            p = mock.patch(m)
+            patched.append(p.start())
+            self.addCleanup(p.stop)
+
+        self.requests = patched[0].request
+
+    def _get_client(self, api_endpoint='http://example.org/'):
+        client = SyncClient("bid_assertion", "client_state")
+        client.api_endpoint = api_endpoint
+        client.auth = mock.sentinel.auth
+        return client
+
+    def test_client_add_serverurl_to_requests(self):
+        client = self._get_client()
+        client._request('get', '/test')
+
+        self.requests.assert_called_with(
+            'get', 'http://example.org/test',
+            auth=client.auth)
+
+    def test_client_proxies_authentication(self):
+        pass
+
+    def test_request_raise_on_error(self):
+        # Patch requests to raise an exception.
+        resp = mock.MagicMock()
+        resp.raise_for_status.side_effect = Exception
+        self.requests.return_value = resp
+
+        client = self._get_client()
+        self.assertRaises(Exception, client._request, 'get', '/')
 
 
 class ClientAuthenticationTest(unittest.TestCase):
     pass
+
+
+class BrowserIDAssertionTest(unittest.TestCase):
+
+    @mock.patch('sync.client.FxAClient')
+    @mock.patch('sync.client.hexlify')
+    def test_trade_works_as_expected(self, hexlify, fxa_client):
+        # mock the calls to PyFxA.
+        fake_keyB = "fake key b"
+        session = mock.MagicMock()
+        session.fetch_keys.return_value = None, fake_keyB
+        fxa_client().login.return_value = session
+        get_browserid_assertion('login', 'password')
+
+        digest = sha256(fake_keyB).digest()[0:16]
+        hexlify.return_value = mock.sentinel.hexlified
+        hexlify.assert_called_with(digest)
 
 
 class ClientHTTPCallsTest(unittest.TestCase):
@@ -54,7 +107,7 @@ class ClientHTTPCallsTest(unittest.TestCase):
     def test_delete_all_records(self):
         self.client.delete_all_records()
         self.client._request.assert_called_with(
-            'delete', '')
+            'delete', '/')
 
     def test_get_records_sets_full_by_default(self):
         self.client.get_records('mycollection')
@@ -67,6 +120,12 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client._request.assert_called_with(
             'get', '/storage/mycollection',
             params={'full': True})
+
+    def test_get_records_handles_ids(self):
+        self.client.get_records('myCollection', ids=(1, 3))
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'full': True, 'ids': '1,3'})
 
     def test_get_records_handles_full(self):
         self.client.get_records('mycollection', full=False)
@@ -131,3 +190,8 @@ class ClientHTTPCallsTest(unittest.TestCase):
         record = {'id': 1234, 'foo': 'bar'}
         self.client.put_record('myCollection', record)
         assert 'id' in record.keys()
+
+    def test_post_records(self):
+        # For now, this does nothing.
+        records = [{'id': idx, 'foo': 'foo'} for idx in range(1, 10)]
+        self.client.post_records("myCollection", records)
