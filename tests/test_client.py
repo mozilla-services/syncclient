@@ -19,9 +19,16 @@ class ClientAuthenticationTest(unittest.TestCase):
 class ClientHTTPCallsTest(unittest.TestCase):
     def setUp(self):
         super(ClientHTTPCallsTest, self).setUp()
+        # Mock the _authenticate method in order to avoid issuance of
+        # requests when we start the client.
+        p = mock.patch('sync.client.SyncClient._authenticate')
+        p.start()
+        self.addCleanup(p.stop)
+
+        self.client = SyncClient('fake-bid-assertion', 'fake-client-state')
+
         # Mock the request method of the client, since we'll use
         # it to make sure the correct requests are made.
-        self.client = SyncClient()
         self.client._request = mock.MagicMock()
 
     def test_info_collection(self):
