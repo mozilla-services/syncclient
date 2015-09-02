@@ -103,6 +103,8 @@ class SyncClient(object):
 
     def delete_all_records(self):
         """Deletes all records for the user."""
+        # Since the _request method already prefix endpoints with "/"
+        # there is no need to specify it here.
         return self._request('delete', '')
 
     def get_records(self, collection, full=True, ids=None, newer=None,

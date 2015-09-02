@@ -50,3 +50,8 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client._request.assert_called_with(
             'get',
             '/info/collection_counts')
+
+    def test_delete_all_records(self):
+        self.client.delete_all_records()
+        self.client._request.assert_called_with(
+            'delete', '')
