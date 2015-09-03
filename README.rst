@@ -2,7 +2,7 @@ Python Firefox Sync client
 ##########################
 
 
-This is a python client for Firefox Sync. Check it out with:
+This is a python client for Firefox Sync. Check it out with::
 
   $ python setup.py install
   $ python syncclient/main.py --help
