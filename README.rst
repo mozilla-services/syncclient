@@ -1,22 +1,18 @@
-Python firefox sync client
+Python Firefox Sync client
 ##########################
 
-.. note::
 
-  Currently, this is a client only used as a proof of concept. Believe it or not but
-  there are no tests. Don't use it (yet) for anything critical.
-  
-This is a python client for sync. Check it out with:
+This is a python client for Firefox Sync. Check it out with:
 
   $ python setup.py install
-  $ python sync/main.py --help
+  $ python syncclient/main.py --help
 
 For instance, if you want to get all passwords (encrypted) use the
 `get_records` action:
 
 .. code-block::
 
-  $ python sync/main.py alexis@notmyidea.org $PASSWORD get_records passwords
+  $ python syncclient/main.py alexis@notmyidea.org $PASSWORD get_records passwords
   [u'{1c1e0eea-d9c2-4c59-b95e-4dbe0800639f}',
    u'{0a76ec08-ba7c-48b1-b026-1d65085f789e}',
    u'{7482b391-bf2f-4542-8ebd-27c4398487ff}',

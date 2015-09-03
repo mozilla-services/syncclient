@@ -13,13 +13,15 @@ REQUIREMENTS = [
     'requests-hawk',
 ]
 
-setup(name='fxsync-client',
+setup(name='syncclient',
       version='0.0.1',
       description='Firefox Sync client',
       long_description=README,
       license='Apache License (2.0)',
       classifiers=[
           "Programming Language :: Python",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 3",
           "Topic :: Internet :: WWW/HTTP",
           "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
           "License :: OSI Approved :: Apache Software License"

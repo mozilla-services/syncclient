@@ -1,5 +1,12 @@
 from hashlib import sha256
 from binascii import hexlify
+import sys
+
+if sys.version_info[0] > 2:  # pragma: no cover
+    from urllib import parse as urlparse
+else:
+    import urlparse  # pragma: no cover
+
 import requests
 from requests_hawk import HawkAuth
 from fxa.core import Client as FxAClient
@@ -13,6 +20,17 @@ TOKENSERVER_URL = "https://token.services.mozilla.com/"
 FXA_SERVER_URL = "https://api.accounts.firefox.com"
 
 
+def encode_header(value):
+    if isinstance(value, str):
+        return value
+    # Python3, it must be bytes
+    if sys.version_info[0] > 2:  # pragma: no cover
+        return value.decode('utf-8')
+    # Python2, it must be unicode
+    else:  # pragma: no cover
+        return value.encode('utf-8')
+
+
 def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
                             tokenserver_url=TOKENSERVER_URL):
     """Trade a user and password for a BrowserID assertion and the client
@@ -22,7 +40,7 @@ def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
     session = client.login(login, password, keys=True)
     bid_assertion = session.get_identity_assertion(tokenserver_url)
     _, keyB = session.fetch_keys()
-    return bid_assertion, hexlify(sha256(keyB).digest()[0:16])
+    return bid_assertion, hexlify(sha256(keyB.encode('utf-8')).digest()[0:16])
 
 
 class SyncClient(object):
@@ -38,7 +56,8 @@ class SyncClient(object):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
         """
-        self.raw_resp = requests.request(method, self.api_endpoint + url,
+        url = urlparse.urljoin(self.api_endpoint, url)
+        self.raw_resp = requests.request(method, url,
                                          auth=self.auth, *args, **kwargs)
         self.raw_resp.raise_for_status()
         return self.raw_resp.json()
@@ -46,11 +65,11 @@ class SyncClient(object):
     def _authenticate(self, bid_assertion, client_state, tokenserver_url):
         """Asks for new temporary token given a BrowserID assertion"""
         headers = {
-            'Authorization': 'BrowserID %s' % bid_assertion.encode(),
+            'Authorization': 'BrowserID %s' % encode_header(bid_assertion),
             'X-Client-State': client_state
         }
-        raw_resp = requests.get(tokenserver_url + '/1.0/sync/1.5',
-                                headers=headers)
+        url = urlparse.urljoin(tokenserver_url, '/1.0/sync/1.5')
+        raw_resp = requests.get(url, headers=headers)
         raw_resp.raise_for_status()
         resp = raw_resp.json()
 
@@ -99,11 +118,11 @@ class SyncClient(object):
         Returns an object mapping collection names associated with the
         account to the total number of items in each collection.
         """
-        return self.request('get', '/info/collection_counts')
+        return self._request('get', '/info/collection_counts')
 
     def delete_all_records(self):
         """Deletes all records for the user."""
-        return self.request('delete', '')
+        return self._request('delete', '/')
 
     def get_records(self, collection, full=True, ids=None, newer=None,
                     limit=None, offset=None, sort=None, if_modified_since=None,
@@ -143,12 +162,11 @@ class SyncClient(object):
             "newest" - orders by last-modified time, largest first
             "index" - orders by the sortindex, highest weight first
         """
-        # XXX Handle parameters + pagination.
         params = {}
         if full:
             params['full'] = True
         if ids is not None:
-            params['ids'] = ','.join(ids)
+            params['ids'] = ','.join(map(str, ids))
         if newer is not None:
             params['newer'] = newer
         if limit is not None:
@@ -199,6 +217,7 @@ class SyncClient(object):
         Note that the server may impose a limit on the amount of data
         submitted for storage in a single BSO.
         """
+        record = record.copy()
         record_id = record.pop('id')
         return self._request('put', '/storage/%s/%s' % (
             collection.lower(), record_id), json=record)
@@ -244,3 +263,4 @@ class SyncClient(object):
         certain number of BSOs in a single request. The default limit on the
         number of BSOs per request is 100.
         """
+        pass
