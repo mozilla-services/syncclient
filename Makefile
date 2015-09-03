@@ -1,5 +1,3 @@
-SERVER_CONFIG = config/development.ini
-
 VIRTUALENV = virtualenv
 SPHINX_BUILDDIR = docs/_build
 VENV := $(shell echo $${VIRTUAL_ENV-.venv})
@@ -29,10 +27,6 @@ $(PYTHON):
 	virtualenv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip
 
-serve: install-dev
-	$(VENV)/bin/cliquet --ini $(SERVER_CONFIG) migrate
-	$(VENV)/bin/pserve $(SERVER_CONFIG) --reload
-
 tests-once: install-dev
 	$(VENV)/bin/py.test --cov-report term-missing --cov-fail-under 100 --cov sync
 
@@ -42,16 +36,3 @@ tests:
 clean:
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -type d -exec rm -fr {} \;
-
-# loadtest-check: install
-# 	$(VENV)/bin/cliquet --ini loadtests/server.ini migrate > syncto.log &&\
-# 	$(VENV)/bin/pserve loadtests/server.ini > syncto.log & PID=$$! && \
-# 	  rm syncto.log || cat syncto.log; \
-# 	  sleep 1 && cd loadtests && \
-# 	  make test SERVER_URL=http://127.0.0.1:8000; \
-# 	  EXIT_CODE=$$?; kill $$PID; exit $$EXIT_CODE
-
-docs: install-dev
-	$(VENV)/bin/sphinx-build -b html -d $(SPHINX_BUILDDIR)/doctrees docs $(SPHINX_BUILDDIR)/html
-	@echo
-	@echo "Build finished. The HTML pages are in $(SPHINX_BUILDDIR)/html/index.html"
