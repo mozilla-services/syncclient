@@ -2,10 +2,10 @@ from hashlib import sha256
 from binascii import hexlify
 import sys
 
-if sys.version_info[0] > 2:  # PRAGMA NO_COVER
+if sys.version_info[0] > 2:  # pragma: no cover
     from urllib import parse as urlparse
 else:
-    import urlparse
+    import urlparse  # pragma: no cover
 
 import requests
 from requests_hawk import HawkAuth
@@ -20,6 +20,17 @@ TOKENSERVER_URL = "https://token.services.mozilla.com/"
 FXA_SERVER_URL = "https://api.accounts.firefox.com"
 
 
+def encode_header(value):
+    if isinstance(value, str):
+        return value
+    # Python3, it must be bytes
+    if sys.version_info[0] > 2:  # pragma: no cover
+        return value.decode('utf-8')
+    # Python2, it must be unicode
+    else:  # pragma: no cover
+        return value.encode('utf-8')
+
+
 def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
                             tokenserver_url=TOKENSERVER_URL):
     """Trade a user and password for a BrowserID assertion and the client
@@ -29,7 +40,7 @@ def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
     session = client.login(login, password, keys=True)
     bid_assertion = session.get_identity_assertion(tokenserver_url)
     _, keyB = session.fetch_keys()
-    return bid_assertion, hexlify(sha256(keyB).digest()[0:16])
+    return bid_assertion, hexlify(sha256(keyB.encode('utf-8')).digest()[0:16])
 
 
 class SyncClient(object):
@@ -54,7 +65,7 @@ class SyncClient(object):
     def _authenticate(self, bid_assertion, client_state, tokenserver_url):
         """Asks for new temporary token given a BrowserID assertion"""
         headers = {
-            'Authorization': 'BrowserID %s' % bid_assertion.encode(),
+            'Authorization': 'BrowserID %s' % encode_header(bid_assertion),
             'X-Client-State': client_state
         }
         url = urlparse.urljoin(tokenserver_url, '/1.0/sync/1.5')

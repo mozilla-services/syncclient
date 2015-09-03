@@ -1,8 +1,9 @@
-from .support import unittest, patch
-from sync.client import SyncClient, get_browserid_assertion
+# -*- coding: utf-8 -*-
+import mock
 from hashlib import sha256
 
-import mock
+from sync.client import SyncClient, get_browserid_assertion, encode_header
+from .support import unittest, patch
 
 
 class ClientRequestIssuanceTest(unittest.TestCase):
@@ -97,7 +98,7 @@ class BrowserIDAssertionTest(unittest.TestCase):
         fxa_client().login.return_value = session
         get_browserid_assertion('login', 'password')
 
-        digest = sha256(fake_keyB).digest()[0:16]
+        digest = sha256(fake_keyB.encode('utf-8')).digest()[0:16]
         hexlify.return_value = mock.sentinel.hexlified
         hexlify.assert_called_with(digest)
 
@@ -228,3 +229,21 @@ class ClientHTTPCallsTest(unittest.TestCase):
         # For now, this does nothing.
         records = [{'id': idx, 'foo': 'foo'} for idx in range(1, 10)]
         self.client.post_records("myCollection", records)
+
+
+class EncodeHeaderTest(unittest.TestCase):
+    def test_encode_str_return_str(self):
+        value = 'Toto'
+        self.assertEqual(type(value), str)
+        value = encode_header(value)
+        self.assertEqual(type(value), str)
+
+    def test_returns_a_string_if_passed_bytes(self):
+        entry = 'Toto'.encode('utf-8')
+        value = encode_header(entry)
+        self.assertEqual(type(value), str)
+
+    def test_returns_a_string_if_passed_unicode(self):
+        entry = u'Rémy'
+        value = encode_header(entry)
+        self.assertEqual(type(value), str)
