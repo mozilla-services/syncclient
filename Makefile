@@ -28,7 +28,7 @@ $(PYTHON):
 	$(VENV)/bin/pip install --upgrade pip
 
 tests-once: install-dev
-	$(VENV)/bin/py.test --cov-report term-missing --cov-fail-under 100 --cov sync
+	$(VENV)/bin/py.test --cov-report term-missing --cov-fail-under 100 --cov syncclient
 
 tests:
 	tox

@@ -5,7 +5,7 @@ from pprint import pprint
 
 def main():
     parser = argparse.ArgumentParser(
-        description="""CLI to interact with firefox sync""",
+        description="""CLI to interact with Firefox Sync""",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(dest='login',

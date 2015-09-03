@@ -1,2 +1,2 @@
 [run]
-omit = sync/main.py
+omit = syncclient/main.py

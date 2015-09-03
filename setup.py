@@ -13,7 +13,7 @@ REQUIREMENTS = [
     'requests-hawk',
 ]
 
-setup(name='fxsync-client',
+setup(name='syncclient',
       version='0.0.1',
       description='Firefox Sync client',
       long_description=README,

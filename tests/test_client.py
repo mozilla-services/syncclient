@@ -2,7 +2,7 @@
 import mock
 from hashlib import sha256
 
-from sync.client import SyncClient, get_browserid_assertion, encode_header
+from syncclient.client import SyncClient, get_browserid_assertion, encode_header
 from .support import unittest, patch
 
 
@@ -11,8 +11,8 @@ class ClientRequestIssuanceTest(unittest.TestCase):
         super(ClientRequestIssuanceTest, self).setUp()
         # Mock the _authenticate method in order to avoid issuance of
         # requests when we start the client.
-        patched = patch(self, 'sync.client.requests',
-                        'sync.client.SyncClient._authenticate')
+        patched = patch(self, 'syncclient.client.requests',
+                        'syncclient.client.SyncClient._authenticate')
 
         self.requests = patched[0].request
 
@@ -43,8 +43,8 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 class ClientAuthenticationTest(unittest.TestCase):
     def setUp(self):
         super(ClientAuthenticationTest, self).setUp()
-        patched = patch(self, 'sync.client.requests',
-                        'sync.client.HawkAuth')
+        patched = patch(self, 'syncclient.client.requests',
+                        'syncclient.client.HawkAuth')
         self.requests = patched[0]
         self.hawk_auth = patched[1]
 
@@ -88,8 +88,8 @@ class ClientAuthenticationTest(unittest.TestCase):
 
 class BrowserIDAssertionTest(unittest.TestCase):
 
-    @mock.patch('sync.client.FxAClient')
-    @mock.patch('sync.client.hexlify')
+    @mock.patch('syncclient.client.FxAClient')
+    @mock.patch('syncclient.client.hexlify')
     def test_trade_works_as_expected(self, hexlify, fxa_client):
         # mock the calls to PyFxA.
         fake_keyB = "fake key b"
@@ -108,7 +108,7 @@ class ClientHTTPCallsTest(unittest.TestCase):
         super(ClientHTTPCallsTest, self).setUp()
         # Mock the _authenticate method in order to avoid issuance of
         # requests when we start the client.
-        p = mock.patch('sync.client.SyncClient._authenticate')
+        p = mock.patch('syncclient.client.SyncClient._authenticate')
         p.start()
         self.addCleanup(p.stop)
 
