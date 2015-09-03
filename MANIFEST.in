@@ -1,0 +1,2 @@
+include *.rst *requirements.txt tox.ini Makefile .coveragerc
+recursive-include tests *.py
