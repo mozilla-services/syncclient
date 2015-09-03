@@ -2,7 +2,9 @@
 import mock
 from hashlib import sha256
 
-from syncclient.client import SyncClient, get_browserid_assertion, encode_header
+from syncclient.client import (
+    SyncClient, get_browserid_assertion, encode_header
+)
 from .support import unittest, patch
 
 
@@ -28,6 +30,14 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 
         self.requests.assert_called_with(
             'get', 'http://example.org/test',
+            auth=client.auth)
+
+    def test_client_add_serverurl_with_prefix_to_requests(self):
+        client = self._get_client("https://example.org/v1/")
+        client._request('get', '/test')
+
+        self.requests.assert_called_with(
+            'get', 'https://example.org/v1/test',
             auth=client.auth)
 
     def test_request_raise_on_error(self):

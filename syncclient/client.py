@@ -56,7 +56,7 @@ class SyncClient(object):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
         """
-        url = urlparse.urljoin(self.api_endpoint, url)
+        url = self.api_endpoint.rstrip('/') + '/' + url.lstrip('/')
         self.raw_resp = requests.request(method, url,
                                          auth=self.auth, *args, **kwargs)
         self.raw_resp.raise_for_status()
