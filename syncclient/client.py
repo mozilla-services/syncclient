@@ -43,43 +43,71 @@ def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
     return bid_assertion, hexlify(sha256(keyB.encode('utf-8')).digest()[0:16])
 
 
+class SyncClientError(Exception):
+    """An error occured in SyncClient."""
+
+
+class TokenserverClient(object):
+    """Client for the Firefox Sync Token Server.
+    """
+    def __init__(self, bid_assertion, client_state,
+                 server_url=TOKENSERVER_URL):
+        self.bid_assertion = bid_assertion
+        self.client_state = client_state
+        self.server_url = server_url
+
+    def get_hawk_credentials(self):
+        """Asks for new temporary token given a BrowserID assertion"""
+        authorization = 'BrowserID %s' % encode_header(self.bid_assertion)
+        headers = {
+            'Authorization': authorization,
+            'X-Client-State': self.client_state
+        }
+        url = urlparse.urljoin(self.server_url, '/1.0/sync/1.5')
+        raw_resp = requests.get(url, headers=headers)
+        raw_resp.raise_for_status()
+        return raw_resp.json()
+
+
 class SyncClient(object):
     """Client for the Firefox Sync server.
     """
 
-    def __init__(self, bid_assertion, client_state,
-                 tokenserver_url=TOKENSERVER_URL,
-                 fxa_server_url=FXA_SERVER_URL):
-        self._authenticate(bid_assertion, client_state, tokenserver_url)
+    def __init__(self, bid_assertion=None, client_state=None,
+                 tokenserver_url=TOKENSERVER_URL, **credentials):
+
+        credentials_complete = set(credentials.keys()).issuperset({
+            'uid', 'api_endpoint', 'hashalg', 'id', 'key'})
+
+        if bid_assertion is not None and client_state is not None:
+            ts_client = TokenserverClient(bid_assertion, client_state,
+                                          tokenserver_url)
+            credentials = ts_client.get_hawk_credentials()
+
+        elif not credentials_complete:
+            raise SyncClientError(
+                "You should either provide a BID assertion and a client state "
+                "or complete Sync credentials (uid, api_endpoint, hashalg, "
+                "id, key)")
+
+        self.user_id = credentials['uid']
+        self.api_endpoint = credentials['api_endpoint']
+        self.auth = HawkAuth(credentials={
+            'algorithm': credentials['hashalg'],
+            'id': credentials['id'],
+            'key': credentials['key']
+        })
 
     def _request(self, method, url, *args, **kwargs):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
+
         """
         url = self.api_endpoint.rstrip('/') + '/' + url.lstrip('/')
         self.raw_resp = requests.request(method, url,
                                          auth=self.auth, *args, **kwargs)
         self.raw_resp.raise_for_status()
         return self.raw_resp.json()
-
-    def _authenticate(self, bid_assertion, client_state, tokenserver_url):
-        """Asks for new temporary token given a BrowserID assertion"""
-        headers = {
-            'Authorization': 'BrowserID %s' % encode_header(bid_assertion),
-            'X-Client-State': client_state
-        }
-        url = urlparse.urljoin(tokenserver_url, '/1.0/sync/1.5')
-        raw_resp = requests.get(url, headers=headers)
-        raw_resp.raise_for_status()
-        resp = raw_resp.json()
-
-        self.auth = HawkAuth(credentials={
-            'algorithm': resp['hashalg'],
-            'id': resp['id'],
-            'key': resp['key']
-        })
-        self.user_id = resp['uid']
-        self.api_endpoint = resp['api_endpoint']
 
     def info_collections(self, if_modified_since=None,
                          if_unmodified_since=None):
