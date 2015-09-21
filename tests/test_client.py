@@ -86,7 +86,7 @@ class SyncClientSetupTest(unittest.TestCase):
                 "uid": "123456",
                 "hashalg": "sha256",
                 "id": "mon-id",
-                "key": "I am not a secured key"
+                "key": "I am not a secure key"
             }
             with mock.patch("syncclient.client.HawkAuth") as hawkauth:
                 SyncClient("bid_assertion", "client_state")
@@ -96,7 +96,7 @@ class SyncClientSetupTest(unittest.TestCase):
                 hawkauth.assert_called_with(credentials={
                     'algorithm': "sha256",
                     'id': "mon-id",
-                    'key': "I am not a secured key"
+                    'key': "I am not a secure key"
                 })
 
     def test_syncclient_can_be_setup_with_sync_credentials(self):
@@ -105,7 +105,7 @@ class SyncClientSetupTest(unittest.TestCase):
             "uid": "123456",
             "hashalg": "sha256",
             "id": "mon-id",
-            "key": "I am not a secured key"
+            "key": "I am not a secure key"
         }
         with mock.patch("syncclient.client.TokenserverClient") as tokenserver:
             with mock.patch("syncclient.client.HawkAuth") as hawkauth:
@@ -115,7 +115,7 @@ class SyncClientSetupTest(unittest.TestCase):
                 hawkauth.assert_called_with(credentials={
                     'algorithm': "sha256",
                     'id': "mon-id",
-                    'key': "I am not a secured key"
+                    'key': "I am not a secure key"
                 })
 
 

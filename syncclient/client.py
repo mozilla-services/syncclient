@@ -2,11 +2,6 @@ from hashlib import sha256
 from binascii import hexlify
 import sys
 
-if sys.version_info[0] > 2:  # pragma: no cover
-    from urllib import parse as urlparse
-else:
-    import urlparse  # pragma: no cover
-
 import requests
 from requests_hawk import HawkAuth
 from fxa.core import Client as FxAClient
@@ -68,7 +63,7 @@ class TokenserverClient(object):
         if duration is not None:
             params['duration'] = int(duration)
 
-        url = urlparse.urljoin(self.server_url, '/1.0/sync/1.5')
+        url = self.server_url.rstrip('/') + '/1.0/sync/1.5'
         raw_resp = requests.get(url, headers=headers, params=params)
         raw_resp.raise_for_status()
         return raw_resp.json()
@@ -81,19 +76,22 @@ class SyncClient(object):
     def __init__(self, bid_assertion=None, client_state=None,
                  tokenserver_url=TOKENSERVER_URL, **credentials):
 
-        credentials_complete = set(credentials.keys()).issuperset({
-            'uid', 'api_endpoint', 'hashalg', 'id', 'key'})
-
         if bid_assertion is not None and client_state is not None:
             ts_client = TokenserverClient(bid_assertion, client_state,
                                           tokenserver_url)
             credentials = ts_client.get_hawk_credentials()
 
-        elif not credentials_complete:
-            raise SyncClientError(
-                "You should either provide a BID assertion and a client state "
-                "or complete Sync credentials (uid, api_endpoint, hashalg, "
-                "id, key)")
+        else:
+            # Make sure if the user wants to use credentials that they
+            # give all the needed information.
+            credentials_complete = set(credentials.keys()).issuperset({
+                'uid', 'api_endpoint', 'hashalg', 'id', 'key'})
+
+            if not credentials_complete:
+                raise SyncClientError(
+                    "You should either provide a BID assertion and a client "
+                    "state or complete Sync credentials (uid, api_endpoint, "
+                    "hashalg, id, key)")
 
         self.user_id = credentials['uid']
         self.api_endpoint = credentials['api_endpoint']
