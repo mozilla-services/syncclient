@@ -3,19 +3,127 @@ import mock
 from hashlib import sha256
 
 from syncclient.client import (
-    SyncClient, get_browserid_assertion, encode_header
+    TokenserverClient, SyncClient, SyncClientError, TOKENSERVER_URL,
+    get_browserid_assertion, encode_header
 )
 from .support import unittest, patch
+
+
+class TokenserverClientTest(unittest.TestCase):
+    def test_token_server_request_token_server_url(self):
+        client = TokenserverClient("given_bid", "given_client_state")
+        with mock.patch("syncclient.client.requests") as requests:
+            client.get_hawk_credentials()
+            requests.get.assert_called_with(
+                "https://token.services.mozilla.com/1.0/sync/1.5",
+                headers={
+                    'Authorization': "BrowserID given_bid",
+                    'X-Client-State': "given_client_state"
+                }, params={})
+            requests.get.return_value.raise_for_status.assert_called_with()
+            requests.get.return_value.json.assert_called_with()
+
+    def test_token_server_request_handle_duration_parameter(self):
+        client = TokenserverClient("given_bid", "given_client_state")
+        with mock.patch("syncclient.client.requests") as requests:
+            client.get_hawk_credentials(duration=300)
+            requests.get.assert_called_with(
+                "https://token.services.mozilla.com/1.0/sync/1.5",
+                headers={
+                    'Authorization': "BrowserID given_bid",
+                    'X-Client-State': "given_client_state"
+                }, params={"duration": 300})
+            requests.get.return_value.raise_for_status.assert_called_with()
+            requests.get.return_value.json.assert_called_with()
+
+
+class SyncClientSetupTest(unittest.TestCase):
+    def setUp(self):
+        super(SyncClientSetupTest, self).setUp()
+        patched = patch(self, 'syncclient.client.requests')
+        self.requests = patched[0].request
+
+    def test_wrong_syncclient_argument_raise_a_syncclienterror(self):
+        try:
+            SyncClient()
+        except SyncClientError as e:
+            self.assertEquals(
+                e.args[0],
+                "You should either provide a BID assertion and a client state "
+                "or complete Sync credentials (uid, api_endpoint, hashalg, "
+                "id, key)")
+        else:
+            self.fail("SyncClient should fail on missing parameters")
+
+    def test_missing_syncclient_argument_raise_a_syncclienterror(self):
+        try:
+            SyncClient("bid_assertion_without_client_state")
+        except SyncClientError as e:
+            self.assertEquals(
+                e.args[0],
+                "You should either provide a BID assertion and a client state "
+                "or complete Sync credentials (uid, api_endpoint, hashalg, "
+                "id, key)")
+        else:
+            self.fail("SyncClient should fail on missing parameters")
+
+    def test_missing_syncclient_credentials_raise_a_syncclienterror(self):
+        try:
+            SyncClient(uid="toto")
+        except SyncClientError as e:
+            self.assertEquals(
+                e.args[0],
+                "You should either provide a BID assertion and a client state "
+                "or complete Sync credentials (uid, api_endpoint, hashalg, "
+                "id, key)")
+        else:
+            self.fail("SyncClient should fail on missing parameters")
+
+    def test_syncclient_can_be_setup_with_bid_and_client_state(self):
+        with mock.patch("syncclient.client.TokenserverClient") as tokenserver:
+            tokenserver.return_value.get_hawk_credentials.return_value = {
+                "api_endpoint": "http://example.org/",
+                "uid": "123456",
+                "hashalg": "sha256",
+                "id": "mon-id",
+                "key": "I am not a secure key"
+            }
+            with mock.patch("syncclient.client.HawkAuth") as hawkauth:
+                SyncClient("bid_assertion", "client_state")
+                tokenserver.assert_called_with(
+                    "bid_assertion", "client_state", TOKENSERVER_URL)
+                tokenserver().get_hawk_credentials.assert_called_with()
+                hawkauth.assert_called_with(credentials={
+                    'algorithm': "sha256",
+                    'id': "mon-id",
+                    'key': "I am not a secure key"
+                })
+
+    def test_syncclient_can_be_setup_with_sync_credentials(self):
+        credentials = {
+            "api_endpoint": "http://example.org/",
+            "uid": "123456",
+            "hashalg": "sha256",
+            "id": "mon-id",
+            "key": "I am not a secure key"
+        }
+        with mock.patch("syncclient.client.TokenserverClient") as tokenserver:
+            with mock.patch("syncclient.client.HawkAuth") as hawkauth:
+                SyncClient(**credentials)
+                tokenserver.assert_not_called()
+                tokenserver().get_hawk_credentials.assert_not_called()
+                hawkauth.assert_called_with(credentials={
+                    'algorithm': "sha256",
+                    'id': "mon-id",
+                    'key': "I am not a secure key"
+                })
 
 
 class ClientRequestIssuanceTest(unittest.TestCase):
     def setUp(self):
         super(ClientRequestIssuanceTest, self).setUp()
-        # Mock the _authenticate method in order to avoid issuance of
-        # requests when we start the client.
-        patched = patch(self, 'syncclient.client.requests',
-                        'syncclient.client.SyncClient._authenticate')
-
+        # Mock requests to avoid issuance of requests when we start the client.
+        patched = patch(self, 'syncclient.client.requests')
         self.requests = patched[0].request
 
     def _get_client(self, api_endpoint='http://example.org/'):
@@ -65,7 +173,7 @@ class ClientAuthenticationTest(unittest.TestCase):
             headers={
                 'X-Client-State': 'client_state',
                 'Authorization': 'BrowserID bid_assertion'
-            })
+            }, params={})
 
     def test_error_with_tokenserver_is_raised(self):
         resp = mock.MagicMock()
@@ -116,13 +224,13 @@ class BrowserIDAssertionTest(unittest.TestCase):
 class ClientHTTPCallsTest(unittest.TestCase):
     def setUp(self):
         super(ClientHTTPCallsTest, self).setUp()
-        # Mock the _authenticate method in order to avoid issuance of
-        # requests when we start the client.
-        p = mock.patch('syncclient.client.SyncClient._authenticate')
-        p.start()
-        self.addCleanup(p.stop)
-
-        self.client = SyncClient('fake-bid-assertion', 'fake-client-state')
+        self.client = SyncClient(
+            hashalg=mock.sentinel.hashalg,
+            id=mock.sentinel.id,
+            key=mock.sentinel.key,
+            uid=mock.sentinel.uid,
+            api_endpoint=mock.sentinel.api_endpoint
+        )
 
         # Mock the request method of the client, since we'll use
         # it to make sure the correct requests are made.
