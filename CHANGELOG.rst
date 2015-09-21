@@ -13,10 +13,10 @@ This document describes changes between each past release.
 0.3.0 (2015-09-21)
 ==================
 
-- Separate SyncClient and TokenserverClient code
-- Add a parameter to configure the Tokenserver credentials validity duration
-- Add parameter to be able to create a SyncClient with existing credentials
-- Handle tokenserver served from a prefixed path.
+- Separate SyncClient and TokenserverClient code.
+- Add a parameter to configure the expiration of the TokenServer returned credentials.
+- Add a parameter to create a SyncClient with already fetched TokenServer credentials.
+- Handle TokenServer served from a prefixed path.
 
 
 0.2.0 (2015-09-03)
