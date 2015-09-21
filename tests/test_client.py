@@ -19,7 +19,20 @@ class TokenserverClientTest(unittest.TestCase):
                 headers={
                     'Authorization': "BrowserID given_bid",
                     'X-Client-State': "given_client_state"
-                })
+                }, params={})
+            requests.get.return_value.raise_for_status.assert_called_with()
+            requests.get.return_value.json.assert_called_with()
+
+    def test_token_server_request_handle_duration_parameter(self):
+        client = TokenserverClient("given_bid", "given_client_state")
+        with mock.patch("syncclient.client.requests") as requests:
+            client.get_hawk_credentials(duration=300)
+            requests.get.assert_called_with(
+                "https://token.services.mozilla.com/1.0/sync/1.5",
+                headers={
+                    'Authorization': "BrowserID given_bid",
+                    'X-Client-State': "given_client_state"
+                }, params={"duration": 300})
             requests.get.return_value.raise_for_status.assert_called_with()
             requests.get.return_value.json.assert_called_with()
 
@@ -160,7 +173,7 @@ class ClientAuthenticationTest(unittest.TestCase):
             headers={
                 'X-Client-State': 'client_state',
                 'Authorization': 'BrowserID bid_assertion'
-            })
+            }, params={})
 
     def test_error_with_tokenserver_is_raised(self):
         resp = mock.MagicMock()

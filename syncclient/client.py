@@ -56,15 +56,20 @@ class TokenserverClient(object):
         self.client_state = client_state
         self.server_url = server_url
 
-    def get_hawk_credentials(self):
+    def get_hawk_credentials(self, duration=None):
         """Asks for new temporary token given a BrowserID assertion"""
         authorization = 'BrowserID %s' % encode_header(self.bid_assertion)
         headers = {
             'Authorization': authorization,
             'X-Client-State': self.client_state
         }
+        params = {}
+
+        if duration is not None:
+            params['duration'] = int(duration)
+
         url = urlparse.urljoin(self.server_url, '/1.0/sync/1.5')
-        raw_resp = requests.get(url, headers=headers)
+        raw_resp = requests.get(url, headers=headers, params=params)
         raw_resp.raise_for_status()
         return raw_resp.json()
 
