@@ -101,19 +101,18 @@ class SyncClient(object):
             'key': credentials['key']
         })
 
-    def _request(self, method, url, *args, **kwargs):
+    def _request(self, method, url, **kwargs):
         """Utility to request an endpoint with the correct authentication
         setup, raises on errors and returns the JSON.
 
         """
         url = self.api_endpoint.rstrip('/') + '/' + url.lstrip('/')
-        self.raw_resp = requests.request(method, url,
-                                         auth=self.auth, *args, **kwargs)
+        self.raw_resp = requests.request(method, url, auth=self.auth, **kwargs)
         self.raw_resp.raise_for_status()
         return self.raw_resp.json()
 
     def info_collections(self, if_modified_since=None,
-                         if_unmodified_since=None):
+                         if_unmodified_since=None, **kwargs):
         """
         Returns an object mapping collection names associated with the account
         to the last-modified time for each collection.
@@ -122,9 +121,9 @@ class SyncClient(object):
         with an expired token, so that clients can check for server-side
         changes before fetching an updated token from the Token Server.
         """
-        return self._request('get', '/info/collections')
+        return self._request('get', '/info/collections', **kwargs)
 
-    def info_quota(self):
+    def info_quota(self, **kwargs):
         """
         Returns a two-item list giving the user's current usage and quota
         (in KB). The second item will be null if the server does not enforce
@@ -132,9 +131,9 @@ class SyncClient(object):
 
         Note that usage numbers may be approximate.
         """
-        return self._request('get', '/info/quota')
+        return self._request('get', '/info/quota', **kwargs)
 
-    def get_collection_usage(self):
+    def get_collection_usage(self, **kwargs):
         """
         Returns an object mapping collection names associated with the account
         to the data volume used for each collection (in KB).
@@ -142,22 +141,22 @@ class SyncClient(object):
         Note that these results may be very expensive as it calculates more
         detailed and accurate usage information than the info_quota method.
         """
-        return self._request('get', '/info/collection_usage')
+        return self._request('get', '/info/collection_usage', **kwargs)
 
-    def get_collection_counts(self):
+    def get_collection_counts(self, **kwargs):
         """
         Returns an object mapping collection names associated with the
         account to the total number of items in each collection.
         """
-        return self._request('get', '/info/collection_counts')
+        return self._request('get', '/info/collection_counts', **kwargs)
 
-    def delete_all_records(self):
+    def delete_all_records(self, **kwargs):
         """Deletes all records for the user."""
-        return self._request('delete', '/')
+        return self._request('delete', '/', **kwargs)
 
     def get_records(self, collection, full=True, ids=None, newer=None,
                     limit=None, offset=None, sort=None, if_modified_since=None,
-                    if_unmodified_since=None):
+                    if_unmodified_since=None, **kwargs):
         """
         Returns a list of the BSOs contained in a collection. For example:
 
@@ -193,7 +192,7 @@ class SyncClient(object):
             "newest" - orders by last-modified time, largest first
             "index" - orders by the sortindex, highest weight first
         """
-        params = {}
+        params = kwargs.pop('params', {})
         if full:
             params['full'] = True
         if ids is not None:
@@ -208,21 +207,22 @@ class SyncClient(object):
             params['sort'] = sort
 
         return self._request('get', '/storage/%s' % collection.lower(),
-                             params=params)
+                             params=params, **kwargs)
 
-    def get_record(self, collection, record_id):
+    def get_record(self, collection, record_id, **kwargs):
         """Returns the BSO in the collection corresponding to the requested id.
         """
         return self._request('get', '/storage/%s/%s' % (collection.lower(),
-                                                        record_id))
+                                                        record_id), **kwargs)
 
-    def delete_record(self, collection, record_id):
+    def delete_record(self, collection, record_id, **kwargs):
         """Deletes the BSO at the given location.
         """
-        return self._request('delete', '/storage/%s/%s' % (collection.lower(),
-                                                           record_id))
+        return self._request('delete', '/storage/%s/%s' % (
+            collection.lower(), record_id), **kwargs)
 
-    def put_record(self, collection, record, if_unmodified_since=None):
+    def put_record(self, collection, record,
+                   if_unmodified_since=None, **kwargs):
         """
         Creates or updates a specific BSO within a collection.
         The passed record must be a python object containing new data for the
@@ -251,9 +251,9 @@ class SyncClient(object):
         record = record.copy()
         record_id = record.pop('id')
         return self._request('put', '/storage/%s/%s' % (
-            collection.lower(), record_id), json=record)
+            collection.lower(), record_id), json=record, **kwargs)
 
-    def post_records(self, collection, records):
+    def post_records(self, collection, records, **kwargs):
         """
         Takes a list of BSOs in the request body and iterates over them,
         effectively doing a series of individual PUTs with the same timestamp.
