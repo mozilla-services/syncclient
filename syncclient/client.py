@@ -111,8 +111,7 @@ class SyncClient(object):
         self.raw_resp.raise_for_status()
         return self.raw_resp.json()
 
-    def info_collections(self, if_modified_since=None,
-                         if_unmodified_since=None, **kwargs):
+    def info_collections(self, **kwargs):
         """
         Returns an object mapping collection names associated with the account
         to the last-modified time for each collection.
@@ -155,8 +154,7 @@ class SyncClient(object):
         return self._request('delete', '/', **kwargs)
 
     def get_records(self, collection, full=True, ids=None, newer=None,
-                    limit=None, offset=None, sort=None, if_modified_since=None,
-                    if_unmodified_since=None, **kwargs):
+                    limit=None, offset=None, sort=None, **kwargs):
         """
         Returns a list of the BSOs contained in a collection. For example:
 
@@ -221,8 +219,7 @@ class SyncClient(object):
         return self._request('delete', '/storage/%s/%s' % (
             collection.lower(), record_id), **kwargs)
 
-    def put_record(self, collection, record,
-                   if_unmodified_since=None, **kwargs):
+    def put_record(self, collection, record, **kwargs):
         """
         Creates or updates a specific BSO within a collection.
         The passed record must be a python object containing new data for the
@@ -237,10 +234,6 @@ class SyncClient(object):
 
         If the target BSO does not exist, then fields that are not provided in
         the python object will be set to their default value by the server.
-
-        :param if_unmodified_since:
-            Avoid overwriting the data if it has been changed since the client
-            fetched it.
 
         Successful responses will return the new last-modified time for the
         collection.
