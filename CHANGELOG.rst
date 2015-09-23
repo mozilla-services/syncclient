@@ -4,10 +4,10 @@ CHANGELOG
 This document describes changes between each past release.
 
 
-0.4.0 (unreleased)
+0.4.0 (2015-09-23)
 ==================
 
-- Nothing changed yet.
+- Forward additionnal client keyword arguments to requests (#12)
 
 
 0.3.0 (2015-09-21)
