@@ -240,26 +240,49 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client.info_collections()
         self.client._request.assert_called_with('get', '/info/collections')
 
+    def test_info_collection_can_receive_requests_parameters(self):
+        self.client.info_collections(headers=mock.sentinel.headers)
+        self.client._request.assert_called_with('get', '/info/collections',
+                                                headers=mock.sentinel.headers)
+
     def test_info_quota(self):
         self.client.info_quota()
         self.client._request.assert_called_with('get', '/info/quota')
 
+    def test_info_quota_can_receive_requests_parameters(self):
+        self.client.info_quota(headers=mock.sentinel.headers)
+        self.client._request.assert_called_with('get', '/info/quota',
+                                                headers=mock.sentinel.headers)
+
     def test_collection_usage(self):
         self.client.get_collection_usage()
         self.client._request.assert_called_with(
-            'get',
-            '/info/collection_usage')
+            'get', '/info/collection_usage')
+
+    def test_collection_usage_can_receive_requests_parameters(self):
+        self.client.get_collection_usage(headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'get', '/info/collection_usage', headers=mock.sentinel.headers)
 
     def test_collection_counts(self):
         self.client.get_collection_counts()
         self.client._request.assert_called_with(
-            'get',
-            '/info/collection_counts')
+            'get', '/info/collection_counts')
+
+    def test_collection_counts_can_receive_requests_parameters(self):
+        self.client.get_collection_counts(headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'get', '/info/collection_counts', headers=mock.sentinel.headers)
 
     def test_delete_all_records(self):
         self.client.delete_all_records()
         self.client._request.assert_called_with(
             'delete', '/')
+
+    def test_delete_all_records_can_receive_requests_parameters(self):
+        self.client.delete_all_records(headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'delete', '/', headers=mock.sentinel.headers)
 
     def test_get_records_sets_full_by_default(self):
         self.client.get_records('mycollection')
@@ -326,10 +349,24 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client._request.assert_called_with(
             'get', '/storage/mycollection/1234')
 
+    def test_get_record_can_receive_requests_parameters(self):
+        self.client.get_record('myCollection', 1234,
+                               headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection/1234',
+            headers=mock.sentinel.headers)
+
     def test_delete_record(self):
         self.client.delete_record('myCollection', 1234)
         self.client._request.assert_called_with(
             'delete', '/storage/mycollection/1234')
+
+    def test_delete_record_can_receive_requests_parameters(self):
+        self.client.delete_record('myCollection', 1234,
+                                  headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'delete', '/storage/mycollection/1234',
+            headers=mock.sentinel.headers)
 
     def test_put_record(self):
         record = {'id': 1234, 'foo': 'bar'}
@@ -337,6 +374,15 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client._request.assert_called_with(
             'put', '/storage/mycollection/1234',
             json={'foo': 'bar'})
+
+    def test_put_record_can_receive_requests_parameters(self):
+        record = {'id': 1234, 'foo': 'bar'}
+        self.client.put_record('myCollection', record,
+                               headers=mock.sentinel.headers)
+        self.client._request.assert_called_with(
+            'put', '/storage/mycollection/1234',
+            json={'foo': 'bar'},
+            headers=mock.sentinel.headers)
 
     def test_put_record_doesnt_modify_the_passed_object(self):
         record = {'id': 1234, 'foo': 'bar'}
