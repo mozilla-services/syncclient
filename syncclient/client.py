@@ -109,6 +109,15 @@ class SyncClient(object):
         url = self.api_endpoint.rstrip('/') + '/' + url.lstrip('/')
         self.raw_resp = requests.request(method, url, auth=self.auth, **kwargs)
         self.raw_resp.raise_for_status()
+
+        # Also handle 301, 302, and 304
+        if 300 <= self.raw_resp.status_code < 400:
+            http_error_msg = '%s Client Error: %s for url: %s' % (
+                self.raw_resp.status_code,
+                self.raw_resp.reason,
+                self.raw_resp.url)
+            raise requests.exceptions.HTTPError(http_error_msg,
+                                                response=self.raw_resp)
         return self.raw_resp.json()
 
     def info_collections(self, **kwargs):
