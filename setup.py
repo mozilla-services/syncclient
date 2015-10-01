@@ -17,7 +17,7 @@ REQUIREMENTS = [
 ]
 
 setup(name='syncclient',
-      version='0.5.0',
+      version='0.6.0.dev0',
       description='Firefox Sync client',
       long_description=README + '\n\n' + CHANGELOG,
       license='Apache License (2.0)',
