@@ -126,6 +126,7 @@ class ClientRequestIssuanceTest(unittest.TestCase):
         # Mock requests to avoid issuance of requests when we start the client.
         patched = patch(self, 'syncclient.client.requests')
         self.requests = patched[0].request
+        self.requests.return_value.status_code = 200
 
     def _get_client(self, api_endpoint='http://example.org/'):
         client = SyncClient("bid_assertion", "client_state")
