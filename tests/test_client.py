@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import mock
 from hashlib import sha256
+from requests.exceptions import HTTPError
 
 from syncclient.client import (
     TokenserverClient, SyncClient, SyncClientError, TOKENSERVER_URL,
@@ -125,6 +126,7 @@ class ClientRequestIssuanceTest(unittest.TestCase):
         # Mock requests to avoid issuance of requests when we start the client.
         patched = patch(self, 'syncclient.client.requests')
         self.requests = patched[0].request
+        self.requests.return_value.status_code = 200
 
     def _get_client(self, api_endpoint='http://example.org/'):
         client = SyncClient("bid_assertion", "client_state")
@@ -393,6 +395,28 @@ class ClientHTTPCallsTest(unittest.TestCase):
         # For now, this does nothing.
         records = [{'id': idx, 'foo': 'foo'} for idx in range(1, 10)]
         self.client.post_records("myCollection", records)
+
+
+class HandleSyncRequestsResponseTest(unittest.TestCase):
+    def setUp(self):
+        super(HandleSyncRequestsResponseTest, self).setUp()
+        self.client = SyncClient(
+            hashalg=mock.sentinel.hashalg,
+            id=mock.sentinel.id,
+            key=mock.sentinel.key,
+            uid=mock.sentinel.uid,
+            api_endpoint="http://sync.services.mozilla.com/"
+        )
+
+    def test_get_record_can_handle_empty_response(self):
+        with mock.patch("syncclient.client.requests.request") as request:
+            response = mock.MagicMock()
+            response.status_code = 304
+            response.response = "Not Modified"
+            response.url = "http://www.example.com/"
+            request.return_value = response
+            self.assertRaises(HTTPError,
+                              self.client.get_record, 'myCollection', 1234)
 
 
 class EncodeHeaderTest(unittest.TestCase):
