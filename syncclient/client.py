@@ -110,8 +110,7 @@ class SyncClient(object):
         self.raw_resp = requests.request(method, url, auth=self.auth, **kwargs)
         self.raw_resp.raise_for_status()
 
-        # Also handle 301, 302, and 304
-        if 300 <= self.raw_resp.status_code < 400:
+        if self.raw_resp.status_code == 304:
             http_error_msg = '%s Client Error: %s for url: %s' % (
                 self.raw_resp.status_code,
                 self.raw_resp.reason,
