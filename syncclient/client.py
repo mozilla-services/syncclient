@@ -1,5 +1,7 @@
 from hashlib import sha256
 from binascii import hexlify
+import json
+import six
 import sys
 
 import requests
@@ -35,7 +37,9 @@ def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
     session = client.login(login, password, keys=True)
     bid_assertion = session.get_identity_assertion(tokenserver_url)
     _, keyB = session.fetch_keys()
-    return bid_assertion, hexlify(sha256(keyB.encode('utf-8')).digest()[0:16])
+    if isinstance(keyB, six.text_type):
+        keyB = keyB.encode('utf-8')
+    return bid_assertion, hexlify(sha256(keyB).digest()[0:16])
 
 
 class SyncClientError(Exception):
@@ -249,10 +253,19 @@ class SyncClient(object):
         Note that the server may impose a limit on the amount of data
         submitted for storage in a single BSO.
         """
+        if isinstance(record, six.string_types):
+            record = json.loads(record)
         record = record.copy()
         record_id = record.pop('id')
+        headers = {}
+        if 'headers' in kwargs:
+            headers = kwargs.pop('headers')
+
+        headers['Content-Type'] = 'application/json; charset=utf-8'
+
         return self._request('put', '/storage/%s/%s' % (
-            collection.lower(), record_id), json=record, **kwargs)
+            collection.lower(), record_id), data=json.dumps(record),
+            headers=headers, **kwargs)
 
     def post_records(self, collection, records, **kwargs):
         """
