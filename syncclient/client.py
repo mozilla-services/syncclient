@@ -37,7 +37,7 @@ def get_browserid_assertion(login, password, fxa_server_url=FXA_SERVER_URL,
     session = client.login(login, password, keys=True)
     bid_assertion = session.get_identity_assertion(tokenserver_url)
     _, keyB = session.fetch_keys()
-    if isinstance(keyB, six.text_type):
+    if isinstance(keyB, six.text_type):  # pragma: no cover
         keyB = keyB.encode('utf-8')
     return bid_assertion, hexlify(sha256(keyB).digest()[0:16])
 

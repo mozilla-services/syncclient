@@ -375,16 +375,26 @@ class ClientHTTPCallsTest(unittest.TestCase):
         self.client.put_record('myCollection', record)
         self.client._request.assert_called_with(
             'put', '/storage/mycollection/1234',
-            json={'foo': 'bar'})
+            data='{"foo": "bar"}',
+            headers={'Content-Type': 'application/json; charset=utf-8'})
+
+    def test_put_record_handle_json_string_parameter(self):
+        record = '{"id": 1234, "foo": "bar"}'
+        self.client.put_record('myCollection', record)
+        self.client._request.assert_called_with(
+            'put', '/storage/mycollection/1234',
+            data='{"foo": "bar"}',
+            headers={'Content-Type': 'application/json; charset=utf-8'})
 
     def test_put_record_can_receive_requests_parameters(self):
         record = {'id': 1234, 'foo': 'bar'}
         self.client.put_record('myCollection', record,
-                               headers=mock.sentinel.headers)
+                               headers={'Sentinel': 'true'})
         self.client._request.assert_called_with(
             'put', '/storage/mycollection/1234',
-            json={'foo': 'bar'},
-            headers=mock.sentinel.headers)
+            data='{"foo": "bar"}',
+            headers={'Content-Type': 'application/json; charset=utf-8',
+                     'Sentinel': 'true'})
 
     def test_put_record_doesnt_modify_the_passed_object(self):
         record = {'id': 1234, 'foo': 'bar'}
