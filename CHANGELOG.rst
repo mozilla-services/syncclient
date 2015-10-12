@@ -7,8 +7,8 @@ This document describes changes between each past release.
 0.6.0 (2015-10-12)
 ==================
 
-- Supports requests-hawk 0.2.0 (#17)
-- Add support for oldest sort keyword. (#18)
+- Circumvent a limitation present in requests-hawk 0.2.0. (#17)
+- Add support for sorting by oldest when retrieving records. (#18)
 
 
 0.5.0 (2015-10-01)
