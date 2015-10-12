@@ -14,6 +14,7 @@ REQUIREMENTS = [
     'PyFxA',
     'requests',
     'requests-hawk',
+    'six',
 ]
 
 setup(name='syncclient',
