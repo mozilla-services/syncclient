@@ -334,6 +334,12 @@ class ClientHTTPCallsTest(unittest.TestCase):
             'get', '/storage/mycollection',
             params={'sort': 'newest', 'full': True})
 
+    def test_get_records_handles_sort_by_oldest(self):
+        self.client.get_records('mycollection', sort='oldest')
+        self.client._request.assert_called_with(
+            'get', '/storage/mycollection',
+            params={'sort': 'oldest', 'full': True})
+
     def test_get_records_handles_sort_by_index(self):
         self.client.get_records('mycollection', sort='index')
         self.client._request.assert_called_with(
