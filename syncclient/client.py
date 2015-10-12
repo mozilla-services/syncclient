@@ -253,6 +253,7 @@ class SyncClient(object):
         Note that the server may impose a limit on the amount of data
         submitted for storage in a single BSO.
         """
+        # XXX: Workaround until request-hawk supports the json parameter. (#17)
         if isinstance(record, six.string_types):
             record = json.loads(record)
         record = record.copy()
