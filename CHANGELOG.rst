@@ -4,10 +4,11 @@ CHANGELOG
 This document describes changes between each past release.
 
 
-0.6.0 (unreleased)
+0.6.0 (2015-10-12)
 ==================
 
-- Nothing changed yet.
+- Supports requests-hawk 0.2.0 (#17)
+- Add support for oldest sort keyword. (#18)
 
 
 0.5.0 (2015-10-01)
