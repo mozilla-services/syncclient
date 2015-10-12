@@ -197,6 +197,7 @@ class SyncClient(object):
             sorts the output:
             "newest" - orders by last-modified time, largest first
             "index" - orders by the sortindex, highest weight first
+            "oldest" - orders by last-modified time, oldest first
         """
         params = kwargs.pop('params', {})
         if full:
@@ -209,7 +210,7 @@ class SyncClient(object):
             params['limit'] = limit
         if offset is not None:
             params['offset'] = offset
-        if sort is not None and sort in ('newest', 'index'):
+        if sort is not None and sort in ('newest', 'index', 'oldest'):
             params['sort'] = sort
 
         return self._request('get', '/storage/%s' % collection.lower(),
