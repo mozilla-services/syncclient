@@ -20,7 +20,7 @@ class TokenserverClientTest(unittest.TestCase):
                 headers={
                     'Authorization': "BrowserID given_bid",
                     'X-Client-State': "given_client_state"
-                }, params={})
+                }, params={}, verify=None)
             requests.get.return_value.raise_for_status.assert_called_with()
             requests.get.return_value.json.assert_called_with()
 
@@ -33,9 +33,21 @@ class TokenserverClientTest(unittest.TestCase):
                 headers={
                     'Authorization': "BrowserID given_bid",
                     'X-Client-State': "given_client_state"
-                }, params={"duration": 300})
+                }, params={"duration": 300}, verify=None)
             requests.get.return_value.raise_for_status.assert_called_with()
             requests.get.return_value.json.assert_called_with()
+
+    def test_token_server_client_can_be_pass_a_verify_parameter(self):
+        client = TokenserverClient("given_bid", "given_client_state",
+                                   verify='root-ca.crt')
+        with mock.patch("syncclient.client.requests") as requests:
+            client.get_hawk_credentials(duration=300)
+            requests.get.assert_called_with(
+                "https://token.services.mozilla.com/1.0/sync/1.5",
+                headers={
+                    'Authorization': "BrowserID given_bid",
+                    'X-Client-State': "given_client_state"
+                }, params={"duration": 300}, verify='root-ca.crt')
 
 
 class SyncClientSetupTest(unittest.TestCase):
@@ -128,8 +140,8 @@ class ClientRequestIssuanceTest(unittest.TestCase):
         self.requests = patched[0].request
         self.requests.return_value.status_code = 200
 
-    def _get_client(self, api_endpoint='http://example.org/'):
-        client = SyncClient("bid_assertion", "client_state")
+    def _get_client(self, api_endpoint='http://example.org/', **kwargs):
+        client = SyncClient("bid_assertion", "client_state", **kwargs)
         client.api_endpoint = api_endpoint
         client.auth = mock.sentinel.auth
         return client
@@ -140,7 +152,7 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 
         self.requests.assert_called_with(
             'get', 'http://example.org/test',
-            auth=client.auth)
+            auth=client.auth, verify=None)
 
     def test_client_add_serverurl_with_prefix_to_requests(self):
         client = self._get_client("https://example.org/v1/")
@@ -148,7 +160,7 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 
         self.requests.assert_called_with(
             'get', 'https://example.org/v1/test',
-            auth=client.auth)
+            auth=client.auth, verify=None)
 
     def test_request_raise_on_error(self):
         # Patch requests to raise an exception.
@@ -158,6 +170,15 @@ class ClientRequestIssuanceTest(unittest.TestCase):
 
         client = self._get_client()
         self.assertRaises(Exception, client._request, 'get', '/')
+
+    def test_client_add_the_verify_parameter_to_requests(self):
+        client = self._get_client("https://example.org/v1/",
+                                  verify='root-ca.crt')
+        client._request('get', '/test')
+
+        self.requests.assert_called_with(
+            'get', 'https://example.org/v1/test',
+            auth=client.auth, verify='root-ca.crt')
 
 
 class ClientAuthenticationTest(unittest.TestCase):
@@ -175,7 +196,7 @@ class ClientAuthenticationTest(unittest.TestCase):
             headers={
                 'X-Client-State': 'client_state',
                 'Authorization': 'BrowserID bid_assertion'
-            }, params={})
+            }, params={}, verify=None)
 
     def test_error_with_tokenserver_is_raised(self):
         resp = mock.MagicMock()

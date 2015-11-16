@@ -50,10 +50,11 @@ class TokenserverClient(object):
     """Client for the Firefox Sync Token Server.
     """
     def __init__(self, bid_assertion, client_state,
-                 server_url=TOKENSERVER_URL):
+                 server_url=TOKENSERVER_URL, verify=None):
         self.bid_assertion = bid_assertion
         self.client_state = client_state
         self.server_url = server_url
+        self.verify = verify
 
     def get_hawk_credentials(self, duration=None):
         """Asks for new temporary token given a BrowserID assertion"""
@@ -68,7 +69,8 @@ class TokenserverClient(object):
             params['duration'] = int(duration)
 
         url = self.server_url.rstrip('/') + '/1.0/sync/1.5'
-        raw_resp = requests.get(url, headers=headers, params=params)
+        raw_resp = requests.get(url, headers=headers, params=params,
+                                verify=self.verify)
         raw_resp.raise_for_status()
         return raw_resp.json()
 
@@ -78,7 +80,7 @@ class SyncClient(object):
     """
 
     def __init__(self, bid_assertion=None, client_state=None,
-                 tokenserver_url=TOKENSERVER_URL, **credentials):
+                 tokenserver_url=TOKENSERVER_URL, verify=None, **credentials):
 
         if bid_assertion is not None and client_state is not None:
             ts_client = TokenserverClient(bid_assertion, client_state,
@@ -104,6 +106,7 @@ class SyncClient(object):
             'id': credentials['id'],
             'key': credentials['key']
         })
+        self.verify = verify
 
     def _request(self, method, url, **kwargs):
         """Utility to request an endpoint with the correct authentication
@@ -111,6 +114,7 @@ class SyncClient(object):
 
         """
         url = self.api_endpoint.rstrip('/') + '/' + url.lstrip('/')
+        kwargs.setdefault('verify', self.verify)
         self.raw_resp = requests.request(method, url, auth=self.auth, **kwargs)
         self.raw_resp.raise_for_status()
 
