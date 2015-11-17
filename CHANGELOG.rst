@@ -4,10 +4,10 @@ CHANGELOG
 This document describes changes between each past release.
 
 
-0.7.0 (unreleased)
+0.7.0 (2015-11-17)
 ==================
 
-- Nothing changed yet.
+- Add support for trusted certificate pinning. (#21)
 
 
 0.6.0 (2015-10-12)
