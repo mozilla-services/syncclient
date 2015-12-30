@@ -106,11 +106,9 @@ class SyncClientSetupTest(unittest.TestCase):
                 tokenserver.assert_called_with(
                     "bid_assertion", "client_state", TOKENSERVER_URL)
                 tokenserver().get_hawk_credentials.assert_called_with()
-                hawkauth.assert_called_with(credentials={
-                    'algorithm': "sha256",
-                    'id': "mon-id",
-                    'key': "I am not a secure key"
-                })
+                hawkauth.assert_called_with(algorithm="sha256",
+                                            id="mon-id",
+                                            key="I am not a secure key")
 
     def test_syncclient_can_be_setup_with_sync_credentials(self):
         credentials = {
@@ -125,11 +123,9 @@ class SyncClientSetupTest(unittest.TestCase):
                 SyncClient(**credentials)
                 tokenserver.assert_not_called()
                 tokenserver().get_hawk_credentials.assert_not_called()
-                hawkauth.assert_called_with(credentials={
-                    'algorithm': "sha256",
-                    'id': "mon-id",
-                    'key': "I am not a secure key"
-                })
+                hawkauth.assert_called_with(algorithm="sha256",
+                                            id="mon-id",
+                                            key="I am not a secure key")
 
 
 class ClientRequestIssuanceTest(unittest.TestCase):
@@ -217,11 +213,9 @@ class ClientAuthenticationTest(unittest.TestCase):
         self.requests.get.return_value = resp
         client = SyncClient("bid_assertion", "client_state")
 
-        self.hawk_auth.assert_called_with(credentials={
-            'algorithm': mock.sentinel.hashalg,
-            'id': mock.sentinel.id,
-            'key': mock.sentinel.key
-        })
+        self.hawk_auth.assert_called_with(algorithm=mock.sentinel.hashalg,
+                                          id=mock.sentinel.id,
+                                          key=mock.sentinel.key)
 
         assert client.user_id == mock.sentinel.uid
         assert client.api_endpoint == mock.sentinel.api_endpoint
