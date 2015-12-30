@@ -4,10 +4,10 @@ CHANGELOG
 This document describes changes between each past release.
 
 
-0.8.0 (unreleased)
+0.8.0 (2015-12-30)
 ==================
 
-- Nothing changed yet.
+- Update to latest request_hawk API. (#24)
 
 
 0.7.0 (2015-11-17)
