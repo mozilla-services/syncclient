@@ -4,7 +4,7 @@ Python Firefox Sync client
 
 This is a python client for Firefox Sync. Check it out with::
 
-  $ python setup.py install
+  $ pip install -e .
   $ python syncclient/main.py --help
 
 For instance, if you want to get all passwords (encrypted) use the
