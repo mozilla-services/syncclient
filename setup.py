@@ -12,8 +12,8 @@ with codecs.open(os.path.join(here, 'CHANGELOG.rst'), encoding='utf-8') as f:
 
 REQUIREMENTS = [
     'PyFxA',
-    'requests',
     'requests-hawk',
+    'requests',
     'six',
 ]
 
