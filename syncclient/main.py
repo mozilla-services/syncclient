@@ -23,5 +23,6 @@ def main():
     client = SyncClient(*bid_assertion_args)
     pprint(getattr(client, args.action)(*extra))
 
+
 if __name__ == '__main__':
     main()
